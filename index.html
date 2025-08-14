@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hanging Bulbs with Master Switch</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F172A;
+  }
+  body{
+    margin:0; height:100vh; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+  }
+  .scene{
+    position:relative; width:min(1000px,92vw); height:min(560px,88vh);
+    border-radius:16px;
+    background:radial-gradient(1200px 600px at 50% -20%, rgba(255,255,255,.06), transparent 50%);
+    box-shadow:inset 0 30px 60px rgba(0,0,0,.5);
+    overflow:hidden;
+  }
+
+  /* Master button container */
+  .controls{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    z-index:10;
+    display: flex;
+    gap: 5px;
+  }
+
+  /* Each lamp cluster */
+  .lamp{
+    position:absolute; top:0; left:var(--x);
+    transform:translateX(-50%);
+    height:calc(var(--drop) + 120px);
+    width:72px;
+    --drop: 280px;       /* cord length */
+    --x: 50%;            /* horizontal position */
+    --sway: 2deg;        /* cord sway */
+    animation:lamp-sway linear infinite;
+    transform-origin:top center;
+  }
+
+  /* Cord sway animation */
+  @keyframes lamp-sway{
+    0%,100%{ transform:translateX(-50%) rotate(calc(var(--sway) * -1)); }
+    50%    { transform:translateX(-50%) rotate(var(--sway)); }
+  }
+
+  /* CORD */
+  .cord{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:3px; height:var(--drop);
+    background:linear-gradient(#1b1f2e,#0b0e18);
+    border-radius:2px;
+    filter:drop-shadow(0 0 2px rgba(0,0,0,.6));
+  }
+
+  /* Socket */
+  .socket{
+    position:absolute; top:var(--drop); left:50%; transform:translateX(-50%);
+    width:32px; height:44px; border-radius:7px;
+    background:linear-gradient(165deg,#C59B3A 0%, #7E5F19 60%, #E0B95A 100%);
+    box-shadow:inset 0 3px 6px rgba(255,255,255,.25), inset 0 -5px 10px rgba(0,0,0,.35),
+               0 5px 10px rgba(0,0,0,.45);
+  }
+  .socket::before{
+    content:""; position:absolute; left:5px; right:5px; top:10px; height:4px; border-radius:2px;
+    background:rgba(0,0,0,.28);
+    box-shadow:0 8px 0 rgba(0,0,0,.28), 0 16px 0 rgba(0,0,0,.28);
+    opacity:.75;
+  }
+  .socket::after{
+    content:""; position:absolute; top:-4px; left:50%; transform:translateX(-50%);
+    width:10px; height:6px; border-radius:3px;
+    background:#0b0e18;
+  }
+
+  /* Bulb */
+  .bulb{
+    position:absolute; top:calc(var(--drop) + 40px); left:50%; transform:translateX(-50%);
+    width:64px; height:90px; cursor:pointer;
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,.55));
+  }
+  .glass{
+    position:absolute; inset:0;
+    border-radius:30px 30px 36px 36px / 28px 28px 50px 50px;
+    border:2px solid rgba(255,255,255,.24);
+    border-bottom-width:3px;
+    background:
+      radial-gradient(60px 36px at 50% 18%, rgba(255,255,255,.35), rgba(255,255,255,0) 65%),
+      radial-gradient(90px 90px at 62% 42%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%),
+      rgba(230,230,235,.07);
+    backdrop-filter:blur(.6px);
+  }
+  .stem{
+    position:absolute; left:50%; transform:translateX(-50%); top:28px;
+    width:28px; height:18px; border-radius:10px;
+    background:linear-gradient(#777,#444); opacity:.6;
+  }
+  .filament{
+    position:absolute; left:50%; transform:translateX(-50%); top:46px;
+    width:28px; height:2px; border-radius:2px;
+    background:linear-gradient(90deg, rgba(255,170,40,.2) 0 20%, transparent 20% 40%,
+                                      rgba(255,170,40,.2) 40% 60%, transparent 60% 80%,
+                                      rgba(255,170,40,.2) 80% 100%);
+  }
+  .glow, .outer-glow{
+    position:absolute; left:50%; transform:translateX(-50%);
+    pointer-events:none; opacity:0; transition:opacity .25s ease;
+  }
+  .glow{
+    top: 25px; width: 46px; height: 50px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,220,140,1) 0%, rgba(255,200,80,.4) 55%, transparent 70%);
+    filter:blur(1.5px);
+  }
+  .outer-glow{
+    top:-10px; width:160px; height:160px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,210,120,.35), rgba(255,170,40,.08) 50%, transparent 70%);
+    filter:blur(10px);
+  }
+  .on .filament{
+    height:6px;
+    background:
+      radial-gradient(circle at 10% 50%, #ffd24d 0 30%, transparent 31%),
+      radial-gradient(circle at 40% 50%, #ffd24d 0 30%, transparent 31%),
+      radial-gradient(circle at 70% 50%, #ffd24d 0 30%, transparent 31%),
+      radial-gradient(circle at 100% 50%, #ffd24d 0 30%, transparent 31%);
+  }
+  .on .glow{ opacity:1; }
+  .on .outer-glow{ opacity:.85; }
+</style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="controls">
+      <button id="refreshBtn" class="btn btn-secondary btn-sm" onclick="location.reload()">Refresh</button>
+      <button id="masterBtn" class="btn btn-warning btn-sm">Toggle All</button>
+    </div>
+  </div>
+
+<script>
+  const COUNT = 11;
+  const lanes = [7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87];
+  const scene = document.getElementById('scene');
+
+  function makeLamp(i){
+    const lamp = document.createElement('div');
+    lamp.className = 'lamp';
+
+    const x = lanes[i % lanes.length] + (Math.random()*4 - 2);
+    const drop = 170 + Math.floor(Math.random()*200);
+    const sway = (1.5 + Math.random()*1.5).toFixed(1) + 'deg';
+
+    lamp.style.setProperty('--x', x + '%');
+    lamp.style.setProperty('--drop', drop + 'px');
+    lamp.style.setProperty('--sway', sway);
+
+    const cord   = document.createElement('div'); cord.className   = 'cord';
+    const socket = document.createElement('div'); socket.className = 'socket';
+    const bulb   = document.createElement('div'); bulb.className   = 'bulb';
+    bulb.setAttribute('role','button'); bulb.setAttribute('tabindex','0');
+
+    const glass = document.createElement('div'); glass.className = 'glass';
+    const stem  = document.createElement('div'); stem.className  = 'stem';
+    const filament = document.createElement('div'); filament.className = 'filament';
+    const glow  = document.createElement('div'); glow.className  = 'glow';
+    const oglow = document.createElement('div'); oglow.className = 'outer-glow';
+
+    bulb.append(glass, stem, filament, glow, oglow);
+
+    function toggleOn(){ bulb.classList.toggle('on'); }
+    bulb.addEventListener('click', toggleOn);
+    bulb.addEventListener('keydown', e=>{
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleOn(); }
+    });
+
+    lamp.append(cord, socket, bulb);
+    return lamp;
+  }
+
+  const bulbs = [];
+  for(let i=0;i<COUNT;i++){
+    const lamp = makeLamp(i);
+    bulbs.push(lamp.querySelector('.bulb'));
+    scene.appendChild(lamp);
+  }
+
+  document.getElementById('masterBtn').addEventListener('click', ()=>{
+    const allOn = bulbs.every(b=>b.classList.contains('on'));
+    bulbs.forEach(b=>{
+      b.classList.toggle('on', !allOn);
+    });
+  });
+</script>
+</body>
+</html>
